@@ -27,8 +27,8 @@ public class GBK2UTF8 {
 	public static void main(String[] args) throws Exception {
 //		 System.out.println(s1);
 		 
-		 String src = "E:/workspace/book_tujieDesignPattern/src/com/yangfan/part1";
-		 String target = "E:/temp/book/part1";
+		 String src = "E:/workspace/client/src/com/https";
+		 String target = "E:/temp/httpsUtil";
 		 
 		 transfer(src,target);
 	}
