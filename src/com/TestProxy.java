@@ -10,6 +10,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
 
 
+
 /************************************************
     * Description: 
     * @author    Vermouth.yf  
@@ -27,34 +28,51 @@ public class TestProxy {
 		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
 	}
 	
+	private static String Key = "conf/UMFclientPrivatekey.key";
+	private static String myCer = "conf/UMFclientCertificate.cer";
+	private static String bankCer = "conf/vpn10030_citic_certificate.cer";
 	
     public static void main(String[] args) throws Exception {
-    	String sendStr = "";
-		sendStr = sendStr.concat("<?xml version=\"1.0\" encoding=\"GBK\"?>");
-		sendStr = sendStr.concat("<ROOT>");
-		sendStr = sendStr.concat("<stdprocode>0281</stdprocode>");
-		sendStr = sendStr.concat("<custcode>90060120012</custcode>");
-		sendStr = sendStr.concat("<merchantId>011690060120012</merchantId>");
-		sendStr = sendStr.concat("<posid>123456789</posid>");
-		sendStr = sendStr.concat("<sdid>10000070</sdid>");
-		sendStr = sendStr.concat("<custid>011690047840039</custid>");
-		sendStr = sendStr.concat("<custnm>中信52118295</custnm>");
-		sendStr = sendStr.concat("<custacctnum>6226981600504118</custacctnum>");
-		sendStr = sendStr.concat("<certtype>0</certtype>");
-		sendStr = sendStr.concat("<certnum>43073019800928201X</certnum>");
-		sendStr = sendStr.concat("<moblnum>22222222222</moblnum>");
-		sendStr = sendStr.concat("<custpswd>88532f8dd101904a</custpswd>");
-		sendStr = sendStr.concat("<stdtrack2></stdtrack2>");
-		sendStr = sendStr.concat("<stdtrack3></stdtrack3>");
-		sendStr = sendStr.concat("<opendt>20160314</opendt>");
-		sendStr = sendStr.concat("<txdate>20160314</txdate>");
-		sendStr = sendStr.concat("<txtime>112020</txtime>");
-		sendStr = sendStr.concat("<remark1></remark1>");
-		sendStr = sendStr.concat("<remark2></remark2>");
-		sendStr = sendStr.concat("<remark3></remark3>");
-		sendStr = sendStr.concat("</ROOT>");
+    	StringBuffer sb = new StringBuffer();
+    	sb.append("<?xml version=\"1.0\" encoding=\"GBK\"?>");
+		sb.append("<root>");
+		sb.append("<head>");
+		sb.append("<merchantId>").append("030290060120047").append("</merchantId>");
+		sb.append("<requestId>").append("2017031511001003029006012004700000001").append("</requestId>");
+		sb.append("<transactionCode>").append("03029138").append("</transactionCode>");
+		sb.append("</head>");
+		sb.append("<body>");
+		sb.append("<amount>").append("1").append("</amount>");
+		sb.append("<orderDate>").append("20170315").append("</orderDate>");
+		sb.append("<orderId>").append("086122944010").append("</orderId>");
+		sb.append("<period>").append("1").append("</period>");
+		sb.append("<periodUnit>").append("02").append("</periodUnit>");
+		sb.append("<merchantAbbr>").append("</merchantAbbr>");
+		sb.append("<productDesc>").append("</productDesc>");
+		sb.append("<productId>").append("</productId>");
+		sb.append("<productName>").append("</productName>");
+		sb.append("<productNum>").append("</productNum>");
+		sb.append("<agrNo>").append("</agrNo>");
+		sb.append("<cardName>").append("</cardName>");
+		sb.append("<cardNo>").append("</cardNo>");
+		sb.append("<bankAbbr>").append("</bankAbbr>");
+		sb.append("<idNo>").append("</idNo>");
+		sb.append("<mobileNo>").append("</mobileNo>");
+		sb.append("<crdUsrProv>").append("</crdUsrProv>");
+		sb.append("<crdProvNm>").append("</crdProvNm>");
+		sb.append("<crdUsrCity>").append("</crdUsrCity>");
+		sb.append("<crdCityNm>").append("</crdCityNm>");
+		sb.append("<notifyUrl>").append("</notifyUrl>");
+		sb.append("<reserved1>").append("</reserved1>");  
+		sb.append("<reserved2>").append("</reserved2>");  //这两个字段到底要不要？
+		sb.append("</body>");
+		sb.append("</root>");
+		String sendStr =sb.toString();
 		
-		doRequest(3000,6000,"https://11.29.8.164:10030",sendStr.getBytes("GBK"));
+		byte [] signedData = OLPdecrypt.sign_crypt(sendStr.getBytes("GBK"), "654321", Key, myCer, bankCer, true, false, true);
+		System.out.println(new String(signedData,"GBK"));
+		byte[] byteArr =doRequest(3000,6000,"https://11.29.8.164:10030/sft",signedData);
+		System.out.println(new String(byteArr,"GBK"));
 	}
     
     
@@ -88,17 +106,19 @@ public class TestProxy {
  		System.out.println("[SSLIX]notifyEai,begint to write data at " + current);
  		OutputStream out = connection.getOutputStream();
  		out.write(sendData);
+ 		out.flush();
+ 		out.close();
  		end = new Date(System.currentTimeMillis());
  		System.out.println("write data ok at " + end + ",cost:" + (end.getTime() - current.getTime()));
  		current = new Date(System.currentTimeMillis());
  		System.out.println("begint to read data at " + current);
-
+        
  		byte[] recvMsg = new byte[1024];
  		byte[] valiMsg = null;
  		int readed = 0;
 
  		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
+        
  		while ((readed = connection.getInputStream().read(recvMsg)) != -1)
  		{
  			baos.write(recvMsg, 0, readed);
